@@ -31,6 +31,7 @@ class _SignupViewState extends State<SignupView> {
           .signup(signupForm);
 
       if (error == null) {
+        // ignore: use_build_context_synchronously
         Navigator.pushNamed(context, SigninView.routeName);
       }
     }
