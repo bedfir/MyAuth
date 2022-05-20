@@ -1,5 +1,11 @@
+import 'package:client/models/user_model.dart';
+import 'package:client/providers/auth_provider.dart';
+import 'package:client/views/profile_view.dart';
 import 'package:flutter/material.dart';
 import 'package:client/models/signin_form_model.dart';
+import 'package:provider/provider.dart';
+
+import '../../providers/user_provider.dart';
 
 class SigninView extends StatefulWidget {
   static const String routeName = '/signin';
@@ -11,18 +17,29 @@ class SigninView extends StatefulWidget {
 
 class _SigninViewState extends State<SigninView> {
   final GlobalKey<FormState> key = GlobalKey<FormState>();
-  late SigninForm signupForm;
+  late SigninForm signinForm;
   FormState get form => key.currentState!;
+  String? error;
 
   @override
   void initState() {
-    signupForm = SigninForm(email: null, password: null);
+    signinForm = SigninForm(email: null, password: null);
     super.initState();
   }
 
   Future<void> submitForm() async {
     if (form.validate()) {
       form.save();
+      final response = await Provider.of<AuthProvider>(context, listen: false)
+          .sigin(signinForm);
+      if (response is User) {
+        Provider.of<UserProvider>(context, listen: false).updateUser(response);
+        Navigator.pushNamed(context, ProfileView.routeName);
+      } else {
+        setState(() {
+          error = response['error'];
+        });
+      }
     }
   }
 
@@ -71,7 +88,7 @@ class _SigninViewState extends State<SigninView> {
                     style: const TextStyle(
                       color: Colors.white,
                     ),
-                    onSaved: ((newValue) => signupForm.email = newValue),
+                    onSaved: ((newValue) => signinForm.email = newValue),
                   ),
                   const Padding(
                     padding: EdgeInsets.symmetric(vertical: 15),
@@ -94,7 +111,7 @@ class _SigninViewState extends State<SigninView> {
                     style: const TextStyle(
                       color: Colors.white,
                     ),
-                    onSaved: ((newValue) => signupForm.password = newValue),
+                    onSaved: ((newValue) => signinForm.password = newValue),
                   ),
                   const Padding(
                     padding: EdgeInsets.symmetric(vertical: 10),
