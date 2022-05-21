@@ -20,6 +20,7 @@ class _SigninViewState extends State<SigninView> {
   late SigninForm signinForm;
   FormState get form => key.currentState!;
   String? error;
+  bool hidePassword = true;
 
   @override
   void initState() {
@@ -104,7 +105,24 @@ class _SigninViewState extends State<SigninView> {
                     padding: EdgeInsets.symmetric(vertical: 3),
                   ),
                   TextFormField(
+                    obscureText: hidePassword == true ? true : false,
                     decoration: InputDecoration(
+                      suffixIcon: IconButton(
+                        icon: hidePassword == true
+                            ? const Icon(
+                                Icons.visibility,
+                                color: Colors.white,
+                              )
+                            : const Icon(
+                                Icons.visibility_off,
+                                color: Colors.white,
+                              ),
+                        onPressed: () {
+                          setState(() {
+                            hidePassword = !hidePassword;
+                          });
+                        },
+                      ),
                       fillColor: Colors.grey.shade900,
                       filled: true,
                     ),
@@ -113,8 +131,14 @@ class _SigninViewState extends State<SigninView> {
                     ),
                     onSaved: ((newValue) => signinForm.password = newValue),
                   ),
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 10),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    child: error != null
+                        ? Text(
+                            error!,
+                            style: const TextStyle(color: Colors.red),
+                          )
+                        : null,
                   ),
                   ElevatedButton(
                     onPressed: submitForm,

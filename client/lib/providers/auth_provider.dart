@@ -1,15 +1,60 @@
+import 'dart:async';
+
 import 'package:client/models/signup_form_model.dart';
 import 'package:client/models/user_model.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../models/signin_form_model.dart';
 
 class AuthProvider with ChangeNotifier {
   final String host = 'http://10.0.2.2';
-  bool isLoading = false;
+  final FlutterSecureStorage storage = FlutterSecureStorage();
   late String? token;
+  late Timer? timer;
+  bool isLoading = false;
+  bool? isLoggedin;
+
+  Future<void> initAuth() async {
+    try {
+      String? oldToken = await storage.read(key: 'token');
+
+      if (oldToken == null) {
+        isLoggedin = false;
+      } else {
+        token = oldToken;
+        await refreshToken();
+        if (token != null) {
+          isLoggedin = true;
+          initTimer();
+        } else {
+          isLoggedin = false;
+        }
+        notifyListeners();
+      }
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<void> refreshToken() async {
+    try {
+      http.Response response = await http.get(
+        Uri.parse('$host/api/auth/refresh-token'),
+        headers: {'authorization': 'Bearer $token'},
+      );
+      if (response.statusCode == 200) {
+        token = json.decode(response.body);
+        storage.write(key: 'token', value: token);
+      } else {
+        signout();
+      }
+    } catch (e) {
+      rethrow;
+    }
+  }
 
   Future<dynamic> signup(SignupForm signupForm) async {
     try {
@@ -44,6 +89,9 @@ class AuthProvider with ChangeNotifier {
       if (response.statusCode == 200) {
         final User user = User.fromJson(body['user']);
         token = body['token'];
+        storage.write(key: 'token', value: token);
+        isLoggedin = true;
+        initTimer();
         return user;
       } else {
         return body;
@@ -52,5 +100,20 @@ class AuthProvider with ChangeNotifier {
       isLoading = false;
       rethrow;
     }
+  }
+
+  signout() {
+    isLoggedin = false;
+    token = null;
+    storage.delete(key: 'token');
+    if (timer != null) {
+      timer?.cancel();
+    }
+  }
+
+  void initTimer() {
+    timer = Timer.periodic(const Duration(minutes: 10), (timer) {
+      refreshToken();
+    });
   }
 }

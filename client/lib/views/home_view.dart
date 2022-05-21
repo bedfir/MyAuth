@@ -4,7 +4,7 @@ import 'auth/signin_view.dart';
 import 'auth/signup_view.dart';
 
 class HomeView extends StatelessWidget {
-  static const String routeName = '/';
+  static const String routeName = '/home';
   const HomeView({Key? key}) : super(key: key);
 
   @override

@@ -4,6 +4,7 @@ import 'package:client/views/auth/signin_view.dart';
 import 'package:client/views/auth/signup_view.dart';
 import 'package:client/views/not_found_view.dart';
 import 'package:client/views/profile_view.dart';
+import 'package:client/views/splash_view.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import './views/home_view.dart';
@@ -21,18 +22,30 @@ class MyAuth extends StatefulWidget {
 
 class _MyAuthState extends State<MyAuth> {
   final AuthProvider authProvider = AuthProvider();
-  final UserProvider userProvider = UserProvider();
+
+  @override
+  void initState() {
+    authProvider.initAuth();
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider.value(value: authProvider),
-        ChangeNotifierProvider.value(value: userProvider),
+        ChangeNotifierProxyProvider<AuthProvider, UserProvider>(
+          create: (_) => UserProvider(),
+          update: (_, authprovider, oldUserProvider) {
+            oldUserProvider!.update(authProvider);
+            return oldUserProvider;
+          },
+        ),
       ],
       child: MaterialApp(
         title: 'my auth',
         theme: ThemeData(primarySwatch: Colors.deepPurple),
-        home: const HomeView(),
+        home: const SplashView(),
         onGenerateRoute: (settings) {
           if (settings.name == HomeView.routeName) {
             return MaterialPageRoute(builder: (_) => const HomeView());
@@ -41,7 +54,7 @@ class _MyAuthState extends State<MyAuth> {
           } else if (settings.name == SignupView.routeName) {
             return MaterialPageRoute(builder: (_) => const SignupView());
           } else if (settings.name == ProfileView.routeName) {
-            return MaterialPageRoute(builder: (_) => const ProfileView());
+            return MaterialPageRoute(builder: (_) => ProfileView());
           } else {
             return null;
           }
